@@ -19,7 +19,7 @@ import java.util.Map;
 @Slf4j
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = "classpath:app-ctx-common.xml")
-public class TestAAA {
+public class DemoTest {
     @Autowired
     private TestService testService;
 
