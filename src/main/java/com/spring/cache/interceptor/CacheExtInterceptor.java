@@ -2,9 +2,12 @@ package com.spring.cache.interceptor;
 
 import com.spring.cache.CacheExtManager;
 import com.spring.cache.annotation.BatchCachable;
+import com.spring.cache.annotation.BatchCacheEvict;
 import com.spring.cache.domain.CacheExtOperationContext;
 import com.spring.cache.domain.CacheExtOperationSource;
+import com.spring.cache.operation.BaseCacheOperation;
 import com.spring.cache.operation.BatchCachableOperation;
+import com.spring.cache.operation.BatchCacheEvictOperation;
 import com.spring.cache.operation.CacheOperation;
 import lombok.Setter;
 import org.aopalliance.intercept.MethodInterceptor;
@@ -24,7 +27,8 @@ public class CacheExtInterceptor implements MethodInterceptor,InitializingBean {
     @Autowired
     CacheExtManager cacheExtManager;
 
-    private BatchCachableOperation batchCachableOperation =  new BatchCachableOperation();
+    private BaseCacheOperation batchCachableOperation =  new BatchCachableOperation();
+    private BaseCacheOperation batchCacheEvictOperation =  new BatchCacheEvictOperation();
 
     public Object invoke(MethodInvocation methodInvocation) throws Throwable {
 
@@ -43,7 +47,15 @@ public class CacheExtInterceptor implements MethodInterceptor,InitializingBean {
             context.setOperationSource(source);
             return batchCachableOperation.execute(context);
         }
-        return null;
+        BatchCacheEvict cacheEvictVal = AnnotationUtils.findAnnotation(method,BatchCacheEvict.class);
+        if(cachableVal!=null){
+            CacheExtOperationSource source = CacheExtOperationSource.builder()
+                                                                    .cacheName(cacheEvictVal.cacheName()).keys(cacheEvictVal.keys())
+                                                                    .keyPrefix(cacheEvictVal.keyPrefix()).build();
+            context.setOperationSource(source);
+            return batchCacheEvictOperation.execute(context);
+        }
+        return methodInvocation.proceed();
     }
 
     public void afterPropertiesSet() throws Exception {

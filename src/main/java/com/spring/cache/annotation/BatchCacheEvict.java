@@ -10,4 +10,11 @@ import java.lang.annotation.*;
 @Inherited
 @Documented
 public @interface BatchCacheEvict {
+    String cacheName() default "";
+
+    String keys() default "";
+
+    String keyPrefix() default "";
+
+    long expire() default 0L;
 }

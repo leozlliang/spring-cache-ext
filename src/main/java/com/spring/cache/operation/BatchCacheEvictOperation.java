@@ -18,14 +18,12 @@ import java.util.Set;
  * Created by Administrator on 2018/7/11.
  */
 @Slf4j
-public class BatchCachableOperation extends BaseCacheOperation {
+public class BatchCacheEvictOperation extends BaseCacheOperation {
     @Setter
     private CacheExtManager cacheExtManager;
 
     public Object execute(CacheExtOperationContext context) throws Exception {
-        if(context.getMethod().getReturnType() != Map.class){
-            return process(context);
-        }
+
         int paramIndex =  ReflectExtUtils.indexOfParamName(context.getMethod(),context.getOperationSource().getKeys());
         if(paramIndex==-1){
             return process(context);
@@ -40,33 +38,9 @@ public class BatchCachableOperation extends BaseCacheOperation {
         if(cache==null){
             return process(context);
         }
-        Type returnType =context.getMethod().getGenericReturnType();
-        List<Class> clazzList =  ReflectExtUtils.getGenericClass(returnType);
-        //Map<K,V>里，V在clazzList里的1位置
-        Class valueClazz = clazzList.get(1);
-        Map<?, ?> dataInCache = cache.batchGet(ids,valueClazz);
-        Set<?> keyInCache = null;
-        if(dataInCache!=null){
-            keyInCache =dataInCache.keySet();
-        }
+       cache.batchEvict(ids);
 
-
-        Collection keyInQuery = (Collection)args[paramIndex];
-        if(CollectionUtils.isNotEmpty(keyInCache)){
-            keyInQuery.removeAll(keyInCache);
-        }
-
-        if(CollectionUtils.isEmpty(keyInQuery)){
-            return dataInCache;
-        }
-        Map dataNotInCache = (Map)process(context);
-        if(dataNotInCache==null){
-            return dataInCache;
-        }
-        cache.batchPut(dataNotInCache,valueClazz);
-        dataNotInCache.putAll(dataInCache);
-
-        return dataNotInCache;
+        return process(context);
     }
 
     private Object process(CacheExtOperationContext context)  throws Exception{
