@@ -15,6 +15,4 @@ public @interface BatchCacheEvict {
     String keys() default "";
 
     String keyPrefix() default "";
-
-    long expire() default 0L;
 }

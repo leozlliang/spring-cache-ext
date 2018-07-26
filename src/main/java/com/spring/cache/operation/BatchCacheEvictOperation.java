@@ -7,6 +7,7 @@ import com.spring.cache.utils.ReflectExtUtils;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.MapUtils;
 
 import java.lang.reflect.Type;
 import java.util.Collection;
@@ -23,15 +24,12 @@ public class BatchCacheEvictOperation extends BaseCacheOperation {
     private CacheExtManager cacheExtManager;
 
     public Object execute(CacheExtOperationContext context) throws Exception {
+        if(false == validate(context)){
+            return process(context);
+        }
 
         int paramIndex =  ReflectExtUtils.indexOfParamName(context.getMethod(),context.getOperationSource().getKeys());
-        if(paramIndex==-1){
-            return process(context);
-        }
         Object[] args = context.getArgs();
-        if(!(args[paramIndex] instanceof Collection)){
-            return process(context);
-        }
         Collection ids = (Collection)args[paramIndex];
         log.info("ids:{}",ids);
         CacheExt cache = cacheExtManager.getCache(context.getOperationSource().getCacheName());
@@ -41,6 +39,18 @@ public class BatchCacheEvictOperation extends BaseCacheOperation {
        cache.batchEvict(ids);
 
         return process(context);
+    }
+
+    private boolean validate(CacheExtOperationContext context){
+        int paramIndex =  ReflectExtUtils.indexOfParamName(context.getMethod(),context.getOperationSource().getKeys());
+        if(paramIndex==-1){
+            return false;
+        }
+        Object[] args = context.getArgs();
+        if(!(args[paramIndex] instanceof Collection)){
+            return false;
+        }
+        return true;
     }
 
     private Object process(CacheExtOperationContext context)  throws Exception{

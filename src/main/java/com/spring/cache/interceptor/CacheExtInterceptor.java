@@ -3,12 +3,10 @@ package com.spring.cache.interceptor;
 import com.spring.cache.CacheExtManager;
 import com.spring.cache.annotation.BatchCachable;
 import com.spring.cache.annotation.BatchCacheEvict;
+import com.spring.cache.annotation.BatchCachePut;
 import com.spring.cache.domain.CacheExtOperationContext;
 import com.spring.cache.domain.CacheExtOperationSource;
-import com.spring.cache.operation.BaseCacheOperation;
-import com.spring.cache.operation.BatchCachableOperation;
-import com.spring.cache.operation.BatchCacheEvictOperation;
-import com.spring.cache.operation.CacheOperation;
+import com.spring.cache.operation.*;
 import lombok.Setter;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
@@ -29,6 +27,7 @@ public class CacheExtInterceptor implements MethodInterceptor,InitializingBean {
 
     private BaseCacheOperation batchCachableOperation =  new BatchCachableOperation();
     private BaseCacheOperation batchCacheEvictOperation =  new BatchCacheEvictOperation();
+    private BaseCacheOperation batchCachePutOperation =  new BatchCachePutOperation();
 
     public Object invoke(MethodInvocation methodInvocation) throws Throwable {
 
@@ -48,12 +47,20 @@ public class CacheExtInterceptor implements MethodInterceptor,InitializingBean {
             return batchCachableOperation.execute(context);
         }
         BatchCacheEvict cacheEvictVal = AnnotationUtils.findAnnotation(method,BatchCacheEvict.class);
-        if(cachableVal!=null){
+        if(cacheEvictVal!=null){
             CacheExtOperationSource source = CacheExtOperationSource.builder()
                                                                     .cacheName(cacheEvictVal.cacheName()).keys(cacheEvictVal.keys())
                                                                     .keyPrefix(cacheEvictVal.keyPrefix()).build();
             context.setOperationSource(source);
             return batchCacheEvictOperation.execute(context);
+        }
+        BatchCachePut cachePutVal = AnnotationUtils.findAnnotation(method,BatchCachePut.class);
+        if(cachePutVal!=null){
+            CacheExtOperationSource source = CacheExtOperationSource.builder()
+                                                                    .cacheName(cachePutVal.cacheName()).expire(cachePutVal.expire())
+                                                                    .keyPrefix(cachePutVal.keyPrefix()).build();
+            context.setOperationSource(source);
+            return batchCachePutOperation.execute(context);
         }
         return methodInvocation.proceed();
     }

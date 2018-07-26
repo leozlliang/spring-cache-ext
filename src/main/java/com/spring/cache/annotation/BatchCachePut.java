@@ -10,4 +10,9 @@ import java.lang.annotation.*;
 @Inherited
 @Documented
 public @interface BatchCachePut {
+    String cacheName() default "";
+
+    String keyPrefix() default "";
+
+    long expire() default 0L;
 }
